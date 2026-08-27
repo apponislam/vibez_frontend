@@ -40,7 +40,7 @@ export default function ReferralsPage() {
 
     if (isStatsLoading || isRevenueLoading || isCommissionLoading || isWithdrawalsLoading) {
         return (
-            <div className="flex h-[400px] items-center justify-center">
+            <div className="flex h-100 items-center justify-center">
                 <p className="text-zinc-400 animate-pulse">Loading referrals...</p>
             </div>
         );
@@ -153,7 +153,7 @@ export default function ReferralsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-[#171717] border border-white/5 rounded-2xl p-8">
                     <h3 className="text-base font-bold text-white mb-8">Monthly Referral Growth</h3>
-                    <div className="h-[300px] w-full">
+                    <div className="h-75 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={dynamicGrowthData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
@@ -176,7 +176,7 @@ export default function ReferralsPage() {
                         <h3 className="text-base font-bold text-white">Commission Revenue Graph</h3>
                         <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-2 py-1 rounded">KEY METRIC</span>
                     </div>
-                    <div className="h-[300px] w-full">
+                    <div className="h-75 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={dynamicCommissionData}>
                                 <defs>
@@ -196,7 +196,7 @@ export default function ReferralsPage() {
                 </div>
             </div>
 
-            {/* Pending Payouts */}
+            {/* Pending Payouts Table */}
             <div className="bg-[#171717] border border-white/5 rounded-2xl overflow-hidden">
                 <div className="p-8 border-b border-white/5">
                     <h3 className="text-base font-bold text-white">Pending Payouts</h3>
@@ -208,56 +208,62 @@ export default function ReferralsPage() {
                                 <th className="px-8 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Affiliate</th>
                                 <th className="px-8 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Amount</th>
                                 <th className="px-8 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Payment Source</th>
-                                {/* <th className="px-8 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Subscription ID</th> */}
                                 <th className="px-8 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Due Date</th>
                                 <th className="px-8 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Status</th>
                                 <th className="px-8 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {dynamicPayouts.map((p: any, i: number) => (
-                                <tr key={i} className="hover:bg-white/2 transition-colors group">
-                                    <td className="px-8 py-5">
-                                        <p className="text-sm font-bold text-white group-hover:text-[#10B981] transition-colors cursor-pointer">{p.affiliate}</p>
-                                    </td>
-                                    <td className="px-8 py-5 text-sm font-bold text-white">{p.amount}</td>
-                                    <td className="px-8 py-5 text-sm text-zinc-500">{p.source}</td>
-                                    {/* <td className="px-8 py-5 text-sm text-zinc-500 font-mono">{p.subId}</td> */}
-                                    <td className="px-8 py-5 text-sm text-zinc-500">{p.dueDate}</td>
-                                    <td className="px-8 py-5">
-                                        <span
-                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-                                                p.status === "PENDING" || p.status === "Pending" ? "bg-orange-500/10 text-orange-500" : p.status === "REJECTED" || p.status === "Rejected" ? "bg-red-500/10 text-red-500" : "bg-[#10B981]/10 text-[#10B981]"
-                                            }`}
-                                        >
-                                            <div className={`w-1 h-1 rounded-full ${p.status === "PENDING" || p.status === "Pending" ? "bg-orange-500" : p.status === "REJECTED" || p.status === "Rejected" ? "bg-red-500" : "bg-[#10B981]"}`} />
-                                            {p.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-5">
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleApprove(p.id)}
-                                                disabled={p.status !== "PENDING" && p.status !== "Pending"}
-                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
-                                                    p.status !== "PENDING" && p.status !== "Pending" ? "bg-[#10B981]/10 text-[#10B981] cursor-not-allowed opacity-50" : "bg-[#10B981] text-white hover:bg-[#0da673]"
-                                                }`}
-                                            >
-                                                {p.status === "APPROVED" || p.status === "Approved" ? "Approved" : "Approve"}
-                                            </button>
-                                            <button
-                                                onClick={() => handleReject(p.id)}
-                                                disabled={p.status !== "PENDING" && p.status !== "Pending"}
-                                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
-                                                    p.status !== "PENDING" && p.status !== "Pending" ? "bg-red-500/10 text-red-500 cursor-not-allowed opacity-50" : "bg-zinc-800 text-zinc-400 hover:bg-red-500/20 hover:text-red-500"
-                                                }`}
-                                            >
-                                                {p.status === "REJECTED" || p.status === "Rejected" ? "Rejected" : "Reject"}
-                                            </button>
-                                        </div>
+                            {dynamicPayouts.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-8 py-12 text-center text-zinc-500 text-sm">
+                                        No pending payouts found
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                dynamicPayouts.map((p: any, i: number) => (
+                                    <tr key={p.id || i} className="hover:bg-white/2 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <p className="text-sm font-bold text-white group-hover:text-[#10B981] transition-colors cursor-pointer">{p.affiliate}</p>
+                                        </td>
+                                        <td className="px-8 py-5 text-sm font-bold text-white">{p.amount}</td>
+                                        <td className="px-8 py-5 text-sm text-zinc-500">{p.source}</td>
+                                        <td className="px-8 py-5 text-sm text-zinc-500">{p.dueDate}</td>
+                                        <td className="px-8 py-5">
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
+                                                    p.status === "PENDING" || p.status === "Pending" ? "bg-orange-500/10 text-orange-500" : p.status === "REJECTED" || p.status === "Rejected" ? "bg-red-500/10 text-red-500" : "bg-[#10B981]/10 text-[#10B981]"
+                                                }`}
+                                            >
+                                                <div className={`w-1 h-1 rounded-full ${p.status === "PENDING" || p.status === "Pending" ? "bg-orange-500" : p.status === "REJECTED" || p.status === "Rejected" ? "bg-red-500" : "bg-[#10B981]"}`} />
+                                                {p.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleApprove(p.id)}
+                                                    disabled={p.status !== "PENDING" && p.status !== "Pending"}
+                                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                                        p.status !== "PENDING" && p.status !== "Pending" ? "bg-[#10B981]/10 text-[#10B981] cursor-not-allowed opacity-50" : "bg-[#10B981] text-white hover:bg-[#0da673]"
+                                                    }`}
+                                                >
+                                                    {p.status === "APPROVED" || p.status === "Approved" ? "Approved" : "Approve"}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleReject(p.id)}
+                                                    disabled={p.status !== "PENDING" && p.status !== "Pending"}
+                                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                                        p.status !== "PENDING" && p.status !== "Pending" ? "bg-red-500/10 text-red-500 cursor-not-allowed opacity-50" : "bg-zinc-800 text-zinc-400 hover:bg-red-500/20 hover:text-red-500"
+                                                    }`}
+                                                >
+                                                    {p.status === "REJECTED" || p.status === "Rejected" ? "Rejected" : "Reject"}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -275,7 +281,7 @@ export default function ReferralsPage() {
                         { step: "STEP 5", title: "Referral Activated", icon: Award },
                     ].map((item, idx) => (
                         <React.Fragment key={idx}>
-                            <div className="flex-1 min-w-[180px] group">
+                            <div className="flex-1 min-w-45 group">
                                 <div className="bg-[#10B981]/5 border border-[#10B981]/20 rounded-2xl p-6 text-center group-hover:bg-[#10B981]/10 transition-all border-dashed">
                                     <p className="text-[9px] font-bold text-[#10B981] mb-2">{item.step}</p>
                                     <p className="text-sm font-bold text-white">{item.title}</p>
