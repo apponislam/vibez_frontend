@@ -237,68 +237,76 @@ export default function AdminOverview() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {subscriptions.map((sub: any, i: number) => (
-                                <tr key={sub._id || i} className="hover:bg-white/2 transition-colors group">
-                                    <td className="px-8 py-4">
-                                        <div className="flex items-center gap-3">
-                                            {sub.userId?.profileImage ? (
-                                                <img src={getImageUrl(sub.userId.profileImage)} alt={sub.userId.name} className="w-8 h-8 rounded-full object-cover bg-white/5" />
-                                            ) : (
-                                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                                                    <User className="w-4 h-4 text-zinc-500" />
-                                                </div>
-                                            )}
-                                            <div>
-                                                <p className="text-sm font-bold text-white">{sub.userId?.name || "Unknown User"}</p>
-                                                <p className="text-[11px] text-zinc-500">{sub.userId?.email || "No email"}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-4">
-                                        <p className="text-sm font-medium text-white">{sub.subscriptionPlanId?.name || "Unknown Plan"}</p>
-                                        <p className="text-[11px] text-zinc-500">{sub.subscriptionPlanId?.duration}</p>
-                                    </td>
-                                    <td className="px-8 py-4">
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-bold text-white">CHF {sub.paidPrice !== undefined ? sub.paidPrice : sub.actualPrice || 0}</p>
-                                            {sub.actualPrice !== undefined && sub.actualPrice !== sub.paidPrice && <p className="text-[11px] text-zinc-500 line-through">CHF {sub.actualPrice}</p>}
-                                            {sub.percentOff ? <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[10px] font-bold">{sub.percentOff}% off</span> : null}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-4 text-sm text-zinc-400">
-                                        {sub.commissionUser ? (
-                                            <div className="space-y-1">
-                                                <p className="text-xs font-bold text-white flex items-center gap-1">
-                                                    <TrendingUp className="w-3.5 h-3.5 text-[#10B981]" />
-                                                    {sub.commissionUser.name}
-                                                </p>
-                                                <p className="text-[11px] text-zinc-500">{sub.commissionUser.email}</p>
-                                                {sub.commissionAmount !== undefined && <p className="text-[11px] text-amber-500 font-semibold">Comm: CHF {sub.commissionAmount}</p>}
-                                            </div>
-                                        ) : (
-                                            <span className="text-xs text-zinc-600">—</span>
-                                        )}
-                                    </td>
-                                    <td className="px-8 py-4">
-                                        <div className="flex flex-col gap-1 items-start">
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${sub.status === "ACTIVE" ? "bg-[#10B981]/10 text-[#10B981]" : sub.status === "CANCELLED" || sub.status === "CANCELED" ? "bg-red-500/10 text-red-500" : "bg-zinc-500/10 text-zinc-400"}`}>
-                                                {sub.status || "UNKNOWN"}
-                                            </span>
-                                            {sub.isTrial && <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[9px] font-bold uppercase tracking-wider">Trial</span>}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-4 text-right">
-                                        <div className="space-y-1 text-xs inline-block text-left">
-                                            <p className="text-zinc-400">
-                                                <span className="text-zinc-600 font-medium text-[9px] uppercase">Start:</span> {sub.startDate ? new Date(sub.startDate).toLocaleDateString() : "N/A"}
-                                            </p>
-                                            <p className="text-white font-medium">
-                                                <span className="text-zinc-600 font-medium text-[9px] uppercase">End:</span> {sub.endDate ? new Date(sub.endDate).toLocaleDateString() : "N/A"}
-                                            </p>
-                                        </div>
+                            {subscriptions.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-8 py-12 text-center text-zinc-500 text-sm">
+                                        No recent subscriptions found
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                subscriptions.map((sub: any, i: number) => (
+                                    <tr key={sub._id || i} className="hover:bg-white/2 transition-colors group">
+                                        <td className="px-8 py-4">
+                                            <div className="flex items-center gap-3">
+                                                {sub.userId?.profileImage ? (
+                                                    <img src={getImageUrl(sub.userId.profileImage)} alt={sub.userId.name} className="w-8 h-8 rounded-full object-cover bg-white/5" />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                                                        <User className="w-4 h-4 text-zinc-500" />
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="text-sm font-bold text-white">{sub.userId?.name || "Unknown User"}</p>
+                                                    <p className="text-[11px] text-zinc-500">{sub.userId?.email || "No email"}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-4">
+                                            <p className="text-sm font-medium text-white">{sub.subscriptionPlanId?.name || "Unknown Plan"}</p>
+                                            <p className="text-[11px] text-zinc-500">{sub.subscriptionPlanId?.duration}</p>
+                                        </td>
+                                        <td className="px-8 py-4">
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-bold text-white">CHF {sub.paidPrice !== undefined ? sub.paidPrice : sub.actualPrice || 0}</p>
+                                                {sub.actualPrice !== undefined && sub.actualPrice !== sub.paidPrice && <p className="text-[11px] text-zinc-500 line-through">CHF {sub.actualPrice}</p>}
+                                                {sub.percentOff ? <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[10px] font-bold">{sub.percentOff}% off</span> : null}
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-4 text-sm text-zinc-400">
+                                            {sub.commissionUser ? (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-bold text-white flex items-center gap-1">
+                                                        <TrendingUp className="w-3.5 h-3.5 text-[#10B981]" />
+                                                        {sub.commissionUser.name}
+                                                    </p>
+                                                    <p className="text-[11px] text-zinc-500">{sub.commissionUser.email}</p>
+                                                    {sub.commissionAmount !== undefined && <p className="text-[11px] text-amber-500 font-semibold">Comm: CHF {sub.commissionAmount}</p>}
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-zinc-600">—</span>
+                                            )}
+                                        </td>
+                                        <td className="px-8 py-4">
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${sub.status === "ACTIVE" ? "bg-[#10B981]/10 text-[#10B981]" : sub.status === "CANCELLED" || sub.status === "CANCELED" ? "bg-red-500/10 text-red-500" : "bg-zinc-500/10 text-zinc-400"}`}>
+                                                    {sub.status || "UNKNOWN"}
+                                                </span>
+                                                {sub.isTrial && <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[9px] font-bold uppercase tracking-wider">Trial</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-4 text-right">
+                                            <div className="space-y-1 text-xs inline-block text-left">
+                                                <p className="text-zinc-400">
+                                                    <span className="text-zinc-600 font-medium text-[9px] uppercase">Start:</span> {sub.startDate ? new Date(sub.startDate).toLocaleDateString() : "N/A"}
+                                                </p>
+                                                <p className="text-white font-medium">
+                                                    <span className="text-zinc-600 font-medium text-[9px] uppercase">End:</span> {sub.endDate ? new Date(sub.endDate).toLocaleDateString() : "N/A"}
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
