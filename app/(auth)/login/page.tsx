@@ -141,7 +141,7 @@ export default function LoginPage() {
                                 />
                                 Remember me
                             </label>
-                            <a href="#" className="text-zinc-400 hover:text-zinc-600">Forgot Password?</a>
+                            <Link href="/forgot-password" className="text-zinc-400 hover:text-zinc-600">Forgot Password?</Link>
                         </div>
 
                         <button 
