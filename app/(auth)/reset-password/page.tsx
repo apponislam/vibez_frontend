@@ -32,14 +32,10 @@ export default function ResetPasswordPage() {
         }
 
         try {
-            const payload: any = {
-                email,
+            const payload = {
+                token,
                 newPassword,
-                password: newPassword, // Sending both keys for safety depending on backend schema
             };
-            if (token) {
-                payload.token = token;
-            }
 
             const response = await resetPassword(payload).unwrap();
             toast.success(response?.message || "Password reset successfully!");

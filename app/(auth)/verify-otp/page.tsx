@@ -57,9 +57,10 @@ export default function VerifyOtpPage() {
             const response = await verifyOtp({ email, otp: otpString }).unwrap();
             toast.success(response?.message || "OTP verified successfully!");
 
-            // Store reset token if provided or proceed to reset password page
-            if (response?.data?.resetToken) {
-                sessionStorage.setItem('reset_token', response.data.resetToken);
+            // Store reset token from response.data.token
+            const resetToken = response?.data?.token || response?.data?.resetToken;
+            if (resetToken) {
+                sessionStorage.setItem('reset_token', resetToken);
             }
             router.push('/reset-password');
         } catch (error: any) {
