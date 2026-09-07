@@ -37,7 +37,7 @@ export default function UserManagement() {
 
     if (isStatsLoading || isUsersLoading) {
         return (
-            <div className="flex h-[400px] items-center justify-center">
+            <div className="flex h-100 items-center justify-center">
                 <p className="text-zinc-400 animate-pulse">Loading users...</p>
             </div>
         );

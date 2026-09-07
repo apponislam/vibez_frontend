@@ -43,8 +43,8 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Skeleton className="h-[300px] w-full rounded-[10px]" />
-                    <Skeleton className="h-[300px] w-full rounded-[10px]" />
+                    <Skeleton className="h-75 w-full rounded-[10px]" />
+                    <Skeleton className="h-75 w-full rounded-[10px]" />
                 </div>
             </div>
         );
@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
                 {/* Bar Chart */}
                 <div className="bg-white rounded-[10px] border border-zinc-100 p-6">
                     <h2 className="text-base font-bold text-zinc-900 mb-4">Bookings per Day</h2>
-                    <ChartContainer config={barConfig} className="h-[260px] w-full">
+                    <ChartContainer config={barConfig} className="h-65 w-full">
                         <BarChart data={barData} barCategoryGap="30%" margin={{ bottom: 20 }}>
                             <CartesianGrid vertical={false} stroke="#F4F4F5" />
                             <XAxis
@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
                 {/* Pie Chart */}
                 <div className="bg-white rounded-[10px] border border-zinc-100 p-6">
                     <h2 className="text-base font-bold text-zinc-900 mb-4">Lunch vs Dinner Usage</h2>
-                    <ChartContainer config={pieConfig} className="h-[240px] w-full">
+                    <ChartContainer config={pieConfig} className="h-60 w-full">
                         <PieChart>
                             <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
                             <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3}>

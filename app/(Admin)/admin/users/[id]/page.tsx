@@ -37,7 +37,7 @@ export default function UserActivityPage({ params }: { params: Promise<{ id: str
 
     if (isUserLoading || isSummaryLoading) {
         return (
-            <div className="flex h-[400px] items-center justify-center">
+            <div className="flex h-100 items-center justify-center">
                 <p className="text-zinc-400 animate-pulse">Loading user activity...</p>
             </div>
         );
@@ -48,7 +48,7 @@ export default function UserActivityPage({ params }: { params: Promise<{ id: str
 
     if (!user) {
         return (
-            <div className="flex flex-col h-[400px] items-center justify-center gap-4">
+            <div className="flex flex-col h-100 items-center justify-center gap-4">
                 <p className="text-zinc-400">User not found.</p>
                 <button onClick={() => router.back()} className="text-[#10B981] hover:underline">
                     Go Back

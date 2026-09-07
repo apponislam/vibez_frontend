@@ -59,19 +59,10 @@ const reviews = [
     },
 ];
 
-const StarPath = "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
+const StarPath =
+    "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
 
-function StarRating({
-    count,
-    filled = "text-green-500",
-    empty = "text-gray-300",
-    size = "w-4 h-4",
-}: {
-    count: number;
-    filled?: string;
-    empty?: string;
-    size?: string;
-}) {
+function StarRating({ count, filled = "text-green-500", empty = "text-gray-300", size = "w-4 h-4" }: { count: number; filled?: string; empty?: string; size?: string }) {
     return (
         <div className="flex gap-0.5">
             {[...Array(5)].map((_, i) => (
@@ -85,22 +76,18 @@ function StarRating({
 
 function ReviewCard({ review }: { review: (typeof reviews)[0] }) {
     return (
-        <div className="min-w-[260px] max-w-[260px] md:min-w-[300px] md:max-w-[300px] mx-2 md:mx-2.5 bg-[#FAE6EB] rounded-[20px] p-5 md:p-6 flex flex-col shrink-0">
+        <div className="min-w-65 max-w-65 md:min-w-75 md:max-w-75 mx-2 md:mx-2.5 bg-[#FAE6EB] rounded-[20px] p-5 md:p-6 flex flex-col shrink-0">
             {/* Stars */}
             <div className="mb-3">
                 <StarRating count={review.rating} filled="text-[#CF0738]" />
             </div>
 
             {/* Review text */}
-            <p className="text-[#151C27] text-sm leading-relaxed italic mb-5 flex-1">
-                &ldquo;{review.text}&rdquo;
-            </p>
+            <p className="text-[#151C27] text-sm leading-relaxed italic mb-5 flex-1">&ldquo;{review.text}&rdquo;</p>
 
             {/* Author */}
             <div className="flex items-center gap-2.5">
-                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
-                    {review.avatar}
-                </div>
+                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-xs shrink-0`}>{review.avatar}</div>
                 <div>
                     <p className="text-[#151C27] font-bold text-[13px] leading-none mb-0.5">{review.name}</p>
                     <p className="text-gray-400 text-[11px]">{review.role}</p>
@@ -115,12 +102,9 @@ export default function Review() {
 
     return (
         <section className="overflow-hidden">
-
             {/* ── Mobile / Tablet: stacked layout ── */}
             <div className="block lg:hidden px-4 md:px-8 mb-8">
-                <h2 className="text-2xl md:text-3xl font-semibold text-[#151C27] leading-tight mb-6">
-                    Our User Review
-                </h2>
+                <h2 className="text-2xl md:text-3xl font-semibold text-[#151C27] leading-tight mb-6">Our User Review</h2>
 
                 {/* Google Play — mobile */}
                 <div className="flex items-center gap-3 mb-4">
@@ -169,13 +153,10 @@ export default function Review() {
             </div>
 
             {/* ── Main Row ── */}
-            <div className="flex items-center min-h-[260px]">
-
+            <div className="flex items-center min-h-65">
                 {/* ── LEFT PANEL — desktop only (1/4) ── */}
                 <div className="hidden lg:block w-1/4 shrink-0 pl-4 md:pl-10 lg:pl-12 pr-8">
-                    <h2 className="text-2xl md:text-3xl lg:text-[42px] font-semibold text-[#151C27] leading-tight mb-7">
-                        Our User Review
-                    </h2>
+                    <h2 className="text-2xl md:text-3xl lg:text-[42px] font-semibold text-[#151C27] leading-tight mb-7">Our User Review</h2>
 
                     {/* Google Play */}
                     <div className="flex items-center gap-4 mb-6">

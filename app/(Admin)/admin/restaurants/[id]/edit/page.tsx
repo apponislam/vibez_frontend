@@ -412,7 +412,7 @@ export default function EditRestaurantPage({ params }: { params: Promise<{ id: s
 
     if (error || !restaurant) {
         return (
-            <div className="flex flex-col h-[400px] items-center justify-center gap-4">
+            <div className="flex flex-col h-100 items-center justify-center gap-4">
                 <p className="text-zinc-400">Failed to load restaurant profile settings.</p>
                 <button onClick={() => router.push("/admin/restaurants")} className="flex items-center gap-2 text-[#10B981] hover:underline text-sm font-bold">
                     <ArrowLeft className="w-4 h-4" /> Go Back
