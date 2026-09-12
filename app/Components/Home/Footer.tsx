@@ -9,7 +9,7 @@ export default function Footer() {
                     {/* Logo and Description */}
                     <div className="md:col-span-4">
                         <Link href="/">
-                            <Image src="/logo2.svg" alt="Logo" width={100} height={100} />
+                            <Image src="/logo2.svg" alt="Logo" width={100} height={100} className="w-24 h-6" />
                         </Link>
                         <p className="mt-4 max-w-70 text-sm leading-relaxed text-zinc-300">Connecting people with the best local food experiences while helping restaurants grow.</p>
                     </div>
@@ -38,11 +38,21 @@ export default function Footer() {
                                 </ul>
                             </div>
                             <div>
-                                <h3 className="text-sm font-bold text-white">Support</h3>
+                                <h3 className="text-sm font-bold text-white">Support & Legal</h3>
                                 <ul className="mt-6 space-y-4 text-sm text-zinc-300">
                                     <li>
                                         <Link href="/faq" className="transition-colors hover:text-white">
                                             FAQ
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href="/terms" className="transition-colors hover:text-white">
+                                            AGB (Terms)
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href="/policy" className="transition-colors hover:text-white">
+                                            Datenschutz
                                         </Link>
                                     </li>
                                 </ul>
@@ -52,17 +62,17 @@ export default function Footer() {
                                 <ul className="mt-6 space-y-4 text-sm text-zinc-300 flex gap-4">
                                     <li>
                                         <Link href="#">
-                                            <Image src="/instagram.svg" alt="Instagram" width={24} height={24} />
+                                            <Image src="/instagram.svg" alt="Instagram" width={24} height={24} className="w-6 h-6" />
                                         </Link>
                                     </li>
                                     <li>
                                         <Link href="#">
-                                            <Image src="/facebook.svg" alt="Facebook" width={24} height={24} />
+                                            <Image src="/facebook.svg" alt="Facebook" width={24} height={24} className="w-6 h-6" />
                                         </Link>
                                     </li>
                                     <li>
                                         <Link href="#">
-                                            <Image src="/tiktok.svg" alt="TikTok" width={24} height={24} />
+                                            <Image src="/tiktok.svg" alt="TikTok" width={24} height={24} className="w-6 h-6" />
                                         </Link>
                                     </li>
                                 </ul>

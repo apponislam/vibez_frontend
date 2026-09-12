@@ -37,7 +37,7 @@ export default function HowItWorks() {
                         {/* Phone Image Container */}
                         <div className="relative mb-8 md:mb-10 w-full flex justify-center">
                             <div className="relative w-45 sm:w-50 md:w-55 lg:w-60 aspect-1/2">
-                                <Image src={step.image} alt={step.title} fill className="object-contain" />
+                                <Image src={step.image} alt={step.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 240px" className="object-contain" />
                             </div>
                         </div>
 
