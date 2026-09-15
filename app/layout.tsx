@@ -1,6 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { ReduxProvider } from "@/redux/provider";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" translate="no" suppressHydrationWarning className={cn("h-full", "antialiased", plusJakartaSans.variable, "font-sans", geist.variable)}>
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-E9V463F1QL"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-E9V463F1QL');
+          `}
+        </Script>
+      </head>
       <body suppressHydrationWarning className={`${plusJakartaSans.className} min-h-full flex flex-col`}>
         <script
           id="hydration-fix"
