@@ -18,7 +18,7 @@ export default function FAQ() {
                     <div className="mt-8">
                         <p className="text-base sm:text-lg mb-4 font-medium">Become a Partner</p>
                         <Link href="/partner">
-                            <button className="w-full sm:w-auto px-12 sm:px-20 py-3 font-semibold bg-[#CF0738] text-white rounded-full hover:bg-[#b0052e] transition-colors shadow-md">Join Now</button>
+                            <button className="w-full sm:w-auto px-12 sm:px-20 py-3 font-semibold bg-[#CF0738] text-white rounded-full hover:bg-[#b0052e] transition-colors shadow-md cursor-pointer">Join Now</button>
                         </Link>
                     </div>
                 </div>
@@ -44,7 +44,7 @@ export default function FAQ() {
                         <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-[#013622] mb-4 sm:mb-6">Ready to fill your tables?</h2>
                         <p className="text-[#013622]/80 text-base sm:text-lg md:text-xl font-medium mb-8 sm:mb-10 leading-relaxed">Join Vibez, the community, and grow faster! Request your partnership today.</p>
                         <Link href="/partner">
-                            <button className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 bg-[#151C27] text-white font-bold rounded-full hover:bg-black transition-colors shadow-xl">Get Started Now</button>
+                            <button className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 bg-[#151C27] text-white font-bold rounded-full hover:bg-black transition-colors shadow-xl cursor-pointer">Get Started Now</button>
                         </Link>
                     </div>
                 </div>
