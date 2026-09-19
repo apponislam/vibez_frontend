@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 const faqItems = [
     {
-        question: "How much does it cost to join Logo?",
+        question: "How much does it cost to join Vibez?",
         answer: "There are absolutely no costs for partner restaurants. We don't charge listing fees, commissions, or subscription costs. Our revenue comes from user memberships."
     },
     {
@@ -13,7 +13,7 @@ const faqItems = [
     },
     {
         question: "How long does the setup take?",
-        answer: "The setup is very quick. Once you provide your restaurant details and images, we can have your profile live within 24-48 hours."
+        answer: "The setup takes just 5 minutes. Once you provide your restaurant details and images, we can have your profile live in less than a day."
     },
     {
         question: "Can I cancel at any time?",

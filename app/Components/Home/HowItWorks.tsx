@@ -5,7 +5,7 @@ export default function HowItWorks() {
         {
             number: "1",
             title: "Choose",
-            description: "Browse through hundreds of hand-picked top restaurants and pick your favorite cuisine.",
+            description: "Browse through all of our hand-picked top restaurants in Zurich and choose your favorite cuisine.",
             image: "/phone1.png",
         },
         {
@@ -17,7 +17,7 @@ export default function HowItWorks() {
         {
             number: "3",
             title: "Redeem",
-            description: "Show your digital voucher at the restaurant and enjoy your exclusive NeoTaste benefit.",
+            description: "Show your digital voucher at the restaurant and enjoy your exclusive VIBEZ benefit.",
             image: "/phone3.png",
         },
     ];

@@ -6,8 +6,8 @@ const reviews = [
     {
         id: 1,
         name: "Sarah M.",
-        role: "Berlin Explorer",
-        text: "NeoTaste changed how I explore Berlin. Found so many hidden gems and saved nearly 100CHF in my first month!",
+        role: "Zurich Explorer",
+        text: "VIBEZ changed how I explore Zurich. Found so many hidden gems and saved nearly 100CHF in my first month!",
         rating: 5,
         avatar: "SM",
         avatarBg: "from-[#CF0738] to-[#CF0738]/70",
@@ -15,8 +15,8 @@ const reviews = [
     {
         id: 2,
         name: "David L.",
-        role: "Cologne Foodie",
-        text: "As a student, this app is a lifesaver. High-quality food for a fraction of the price. The interface is super clean too.",
+        role: "Zurich Foodie",
+        text: "As a student in Zurich, this app is a lifesaver. High-quality food for a fraction of the price. The interface is super clean too.",
         rating: 5,
         avatar: "DL",
         avatarBg: "from-[#E8541A] to-[#E8541A]/70",
@@ -24,8 +24,8 @@ const reviews = [
     {
         id: 3,
         name: "Emma J.",
-        role: "Hamburg Gourmet",
-        text: "The best way to try new restaurants. We use it every Friday for our date nights. Highly recommended!",
+        role: "Zurich Gourmet",
+        text: "The best way to try new restaurants across Zurich. We use it every Friday for our date nights. Highly recommended!",
         rating: 5,
         avatar: "EJ",
         avatarBg: "from-[#CF0738] to-[#CF0738]/70",
@@ -33,8 +33,8 @@ const reviews = [
     {
         id: 4,
         name: "Liam K.",
-        role: "Munich Trendsetter",
-        text: "Incredible deals every week! I discovered 3 new favourite spots just this month. Game changer for foodies.",
+        role: "Zurich Trendsetter",
+        text: "Incredible deals every week! I discovered 3 new favourite spots in Zurich just this month. Game changer for foodies.",
         rating: 5,
         avatar: "LK",
         avatarBg: "from-[#A8042B] to-[#A8042B]/70",
@@ -42,8 +42,8 @@ const reviews = [
     {
         id: 5,
         name: "Mia R.",
-        role: "Frankfurt Bites",
-        text: "The app is so intuitive. Booking a table AND getting a discount at the same time? Yes please!",
+        role: "Zurich Bites",
+        text: "The app is so intuitive. Booking a table in Zurich AND getting a discount at the same time? Yes please!",
         rating: 5,
         avatar: "MR",
         avatarBg: "from-[#CF0738] to-[#CF0738]/70",
@@ -51,8 +51,8 @@ const reviews = [
     {
         id: 6,
         name: "Jonas W.",
-        role: "Stuttgart Eats",
-        text: "Been using it for 6 months. Saved over 200CHF and tried more than 20 new places. Absolutely love it.",
+        role: "Zurich Local",
+        text: "Been using VIBEZ for 6 months. Saved over 200CHF and tried more than 20 new places in Zurich. Absolutely love it.",
         rating: 5,
         avatar: "JW",
         avatarBg: "from-[#E8541A] to-[#E8541A]/70",
@@ -87,7 +87,7 @@ function ReviewCard({ review }: { review: (typeof reviews)[0] }) {
 
             {/* Author */}
             <div className="flex items-center gap-2.5">
-                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-xs shrink-0`}>{review.avatar}</div>
+                <div className={`w-9 h-9 rounded-full bg-linear-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-xs shrink-0`}>{review.avatar}</div>
                 <div>
                     <p className="text-[#151C27] font-bold text-[13px] leading-none mb-0.5">{review.name}</p>
                     <p className="text-gray-400 text-[11px]">{review.role}</p>
@@ -209,9 +209,9 @@ export default function Review() {
                 {/* ── RIGHT MARQUEE ── */}
                 <div className="flex-1 overflow-hidden relative">
                     {/* Left fade */}
-                    <div className="absolute left-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+                    <div className="absolute left-0 top-0 bottom-0 w-12 md:w-20 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
                     {/* Right fade */}
-                    <div className="absolute right-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-12 md:w-20 bg-linear-to-l from-white to-transparent z-10 pointer-events-none" />
 
                     {/* Scrolling track */}
                     <div className="review-marquee-track flex items-stretch w-max">

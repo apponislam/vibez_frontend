@@ -42,8 +42,10 @@ export default function FAQ() {
 
                     <div className="relative z-10 max-w-2xl mx-auto">
                         <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-[#013622] mb-4 sm:mb-6">Ready to fill your tables?</h2>
-                        <p className="text-[#013622]/80 text-base sm:text-lg md:text-xl font-medium mb-8 sm:mb-10 leading-relaxed">Join over 7,000 restaurants already growing with NeoTaste. Request your partnership today.</p>
-                        <button className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 bg-[#151C27] text-white font-bold rounded-full hover:bg-black transition-colors shadow-xl">Get Started Now</button>
+                        <p className="text-[#013622]/80 text-base sm:text-lg md:text-xl font-medium mb-8 sm:mb-10 leading-relaxed">Join Vibez, the community, and grow faster! Request your partnership today.</p>
+                        <Link href="/partner">
+                            <button className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 bg-[#151C27] text-white font-bold rounded-full hover:bg-black transition-colors shadow-xl">Get Started Now</button>
+                        </Link>
                     </div>
                 </div>
             </div>
