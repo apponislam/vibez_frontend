@@ -25,6 +25,14 @@ const CUISINE_TYPES = [
     { value: "VIETNAMESE", label: "Vietnamese" },
     { value: "TURKISH", label: "Turkish" },
     { value: "MEXICAN", label: "Mexican" },
+
+    //new
+    { value: "FRENCH", label: "French" },
+    { value: "JAPANESE", label: "Japanese" },
+    { value: "SPANISH", label: "Spanish" },
+    { value: "GREEK", label: "Greek" },
+    { value: "LEBANESE", label: "Lebanese" },
+    { value: "BRAZILIAN", label: "Brazilian" },
 ];
 
 const FOOD_TYPES = [
@@ -240,7 +248,7 @@ export default function SettingsPage() {
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer shrink-0">
                                 <input type="checkbox" className="sr-only peer" checked={globalStaffLogin} onChange={(e) => handleToggleAllStaff(e.target.checked)} disabled={isToggling} />
-                                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#013622]"></div>
+                                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#013622]"></div>
                             </label>
                         </div>
                     </div>

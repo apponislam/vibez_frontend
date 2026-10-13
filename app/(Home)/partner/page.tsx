@@ -61,6 +61,14 @@ const CUISINE_TYPES = [
     { value: "VIETNAMESE", label: "Vietnamese" },
     { value: "TURKISH", label: "Turkish" },
     { value: "MEXICAN", label: "Mexican" },
+
+    //new
+    { value: "FRENCH", label: "French" },
+    { value: "JAPANESE", label: "Japanese" },
+    { value: "SPANISH", label: "Spanish" },
+    { value: "GREEK", label: "Greek" },
+    { value: "LEBANESE", label: "Lebanese" },
+    { value: "BRAZILIAN", label: "Brazilian" },
 ];
 
 const FOOD_TYPES = [

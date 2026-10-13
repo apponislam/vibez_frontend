@@ -85,6 +85,14 @@ const CUISINE_TYPES = [
     { label: "Vietnamese", value: "VIETNAMESE" },
     { label: "Turkish", value: "TURKISH" },
     { label: "Mexican", value: "MEXICAN" },
+
+    //new
+    { label: "French", value: "FRENCH" },
+    { label: "Japanese", value: "JAPANESE" },
+    { label: "Spanish", value: "SPANISH" },
+    { label: "Greek", value: "GREEK" },
+    { label: "Lebanese", value: "LEBANESE" },
+    { label: "Brazilian", value: "BRAZILIAN" },
 ];
 
 const FOOD_TYPES = [
@@ -401,7 +409,7 @@ export default function EditRestaurantPage({ params }: { params: Promise<{ id: s
 
     if (isLoadingRestaurant) {
         return (
-            <div className="flex h-[500px] items-center justify-center">
+            <div className="flex h-125 items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="w-8 h-8 animate-spin text-[#10B981]" />
                     <p className="text-zinc-400 animate-pulse text-sm">Loading restaurant settings...</p>
