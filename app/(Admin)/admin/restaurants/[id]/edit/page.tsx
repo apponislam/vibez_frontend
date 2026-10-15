@@ -229,7 +229,7 @@ export default function EditRestaurantPage({ params }: { params: Promise<{ id: s
         const previewUrl = galleryPreviews[indexToRemove];
         if (previewUrl) {
             if (!previewUrl.startsWith("blob:")) {
-                const baseUrl = process.env.NEXT_PUBLIC_PIC_URL || "https://vibezapi.apponislam.top";
+                const baseUrl = process.env.NEXT_PUBLIC_PIC_URL || "https://api.getvibez.app";
                 const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
                 const originalPath = previewUrl.replace(cleanBase, "");
                 setRemovedImages((prev) => [...prev, originalPath]);

@@ -57,7 +57,7 @@ export default function StaffLayout({
                     console.error("Invalid NEXT_PUBLIC_API_URL:", e);
                 }
             }
-            return "https://vibezapi.apponislam.top";
+            return "https://api.getvibez.app";
         };
 
         const socketUrl = getSocketUrl();
