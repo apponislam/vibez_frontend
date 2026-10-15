@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { UploadCloud, Save, Loader2, Building, ShieldCheck, AlertCircle } from "lucide-react";
+import Script from "next/script";
+import { UploadCloud, Save, Loader2, Building, ShieldCheck, AlertCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useGetMyRestaurantQuery, useUpdateMyRestaurantMutation } from "@/redux/features/restaurant/restaurantApi";
 import { useToggleAllStaffLoginMutation } from "@/redux/features/staff/staffApi";
@@ -84,6 +85,253 @@ export default function SettingsPage() {
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const cuisineDropdownRef = useRef<HTMLDivElement>(null);
     const foodTypeDropdownRef = useRef<HTMLDivElement>(null);
+    const locationContainerRef = useRef<HTMLDivElement>(null);
+    const sessionTokenRef = useRef<any>(null);
+    const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+    const [coordinates, setCoordinates] = useState<{ lat?: string; lng?: string }>({});
+    const [placeSuggestions, setPlaceSuggestions] = useState<any[]>([]);
+    const [isLoadingPlaces, setIsLoadingPlaces] = useState(false);
+    const [isPlaceDropdownOpen, setIsPlaceDropdownOpen] = useState(false);
+
+    const handleStreetChange = (value: string) => {
+        setForm((prev) => ({ ...prev, street: value }));
+
+        if (searchDebounceRef.current) {
+            clearTimeout(searchDebounceRef.current);
+        }
+
+        if (!value.trim() || value.trim().length < 3) {
+            setPlaceSuggestions([]);
+            setIsPlaceDropdownOpen(false);
+            return;
+        }
+
+        searchDebounceRef.current = setTimeout(async () => {
+            try {
+                if (typeof window === "undefined" || !(window as any).google?.maps) {
+                    return;
+                }
+
+                setIsLoadingPlaces(true);
+                const { AutocompleteSessionToken, AutocompleteSuggestion } = await (window as any).google.maps.importLibrary("places");
+
+                if (!sessionTokenRef.current && AutocompleteSessionToken) {
+                    sessionTokenRef.current = new AutocompleteSessionToken();
+                }
+
+                if (AutocompleteSuggestion?.fetchAutocompleteSuggestions) {
+                    const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+                        input: value,
+                        sessionToken: sessionTokenRef.current,
+                    });
+
+                    if (suggestions && suggestions.length > 0) {
+                        setPlaceSuggestions(suggestions);
+                        setIsPlaceDropdownOpen(true);
+                    } else {
+                        setPlaceSuggestions([]);
+                        setIsPlaceDropdownOpen(false);
+                    }
+                }
+            } catch (error) {
+                console.log("Places autocomplete search error:", error);
+                setPlaceSuggestions([]);
+                setIsPlaceDropdownOpen(false);
+            } finally {
+                setIsLoadingPlaces(false);
+            }
+        }, 300);
+    };
+
+    const handleSelectPlace = async (suggestion: any) => {
+        setIsPlaceDropdownOpen(false);
+        const placePrediction = suggestion?.placePrediction;
+        if (!placePrediction) return;
+
+        let place: any = null;
+        try {
+            if (typeof placePrediction.toPlace === "function") {
+                place = placePrediction.toPlace();
+                await place.fetchFields({
+                    fields: ["displayName", "formattedAddress", "location", "addressComponents"],
+                });
+            }
+        } catch (error) {
+            console.log("Failed to fetch place details:", error);
+        }
+
+        try {
+            let streetNumber = "";
+            let route = "";
+            let locality = "";
+            let sublocality = "";
+            let stateName = "";
+            let zip = "";
+            let countryName = "";
+
+            const components = place?.addressComponents || place?.address_components;
+            if (Array.isArray(components)) {
+                components.forEach((component: any) => {
+                    const types = component.types || [];
+                    const longName = component.longText || component.long_name || component.text || component.name || "";
+                    const shortName = component.shortText || component.short_name || "";
+
+                    if (types.includes("street_number")) streetNumber = longName;
+                    if (types.includes("route")) route = longName;
+                    if (types.includes("locality")) locality = longName;
+                    if (types.includes("postal_town") && !locality) locality = longName;
+                    if (types.includes("sublocality") || types.includes("sublocality_level_1") || types.includes("sublocality_level_2")) {
+                        sublocality = longName;
+                        if (!locality) locality = longName;
+                    }
+                    if (types.includes("administrative_area_level_1")) stateName = shortName || longName;
+                    if (types.includes("postal_code") || types.includes("postal_code_prefix")) zip = longName;
+                    if (types.includes("country")) countryName = longName || shortName;
+                });
+            }
+
+            const formattedAddress = place?.formattedAddress || "";
+            const secondaryText = placePrediction?.secondaryText?.text || "";
+            const fullText = placePrediction?.text?.text || "";
+            const mainText = placePrediction?.mainText?.text || "";
+
+            // Fallback for Country if not found in addressComponents
+            if (!countryName) {
+                const countrySources = [secondaryText, formattedAddress, fullText];
+                for (const src of countrySources) {
+                    if (!src) continue;
+                    const parts = src.split(",").map((p: string) => p.trim()).filter(Boolean);
+                    if (parts.length > 0) {
+                        const lastPart = parts[parts.length - 1];
+                        if (lastPart && !/\d/.test(lastPart)) {
+                            countryName = lastPart;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Fallback for ZIP Code if not found in addressComponents (e.g. Bangladesh 1212)
+            if (!zip) {
+                // Priority 1: Check secondaryText (e.g. "Dhaka 1212, Bangladesh")
+                if (secondaryText) {
+                    const match = 
+                        secondaryText.match(/\b\d{5}(?:-\d{4})?\b/) ||
+                        secondaryText.match(/\b[A-Z]\d[A-Z]\s*\d[A-Z]\d\b/i) ||
+                        secondaryText.match(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i) ||
+                        secondaryText.match(/\b(\d{4,6})\b/);
+                    if (match) {
+                        zip = match[0].trim();
+                    }
+                }
+
+                // Priority 2: Check formattedAddress from back to front
+                if (!zip && formattedAddress) {
+                    const parts = formattedAddress.split(",").map((p: string) => p.trim()).filter(Boolean);
+                    for (let i = parts.length - 1; i >= 0; i--) {
+                        const match = 
+                            parts[i].match(/\b\d{5}(?:-\d{4})?\b/) ||
+                            parts[i].match(/\b[A-Z]\d[A-Z]\s*\d[A-Z]\d\b/i) ||
+                            parts[i].match(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i) ||
+                            parts[i].match(/\b(\d{4,6})\b/);
+                        if (match) {
+                            zip = match[0].trim();
+                            break;
+                        }
+                    }
+                }
+
+                // Priority 3: Check fullText from back to front
+                if (!zip && fullText) {
+                    const parts = fullText.split(",").map((p: string) => p.trim()).filter(Boolean);
+                    for (let i = parts.length - 1; i >= 0; i--) {
+                        const match = 
+                            parts[i].match(/\b\d{5}(?:-\d{4})?\b/) ||
+                            parts[i].match(/\b[A-Z]\d[A-Z]\s*\d[A-Z]\d\b/i) ||
+                            parts[i].match(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i) ||
+                            parts[i].match(/\b(\d{4,6})\b/);
+                        if (match) {
+                            zip = match[0].trim();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Fallback for City if not found
+            if (!locality) {
+                if (sublocality) {
+                    locality = sublocality;
+                } else if (secondaryText) {
+                    const parts = secondaryText.split(",").map((p: string) => p.trim()).filter(Boolean);
+                    if (parts.length > 0) {
+                        let cityCandidate = parts[0];
+                        if (zip) {
+                            cityCandidate = cityCandidate.replace(zip, "").trim();
+                        }
+                        cityCandidate = cityCandidate.replace(/\b\d{4,6}\b/g, "").trim();
+                        if (cityCandidate) {
+                            locality = cityCandidate;
+                        }
+                    }
+                }
+            }
+
+            // Fallback for State if not found
+            if (!stateName) {
+                if (locality) {
+                    stateName = locality;
+                }
+            }
+
+            // Compute street address
+            let computedStreet = `${streetNumber} ${route}`.trim();
+            if (!computedStreet) {
+                if (mainText) {
+                    computedStreet = mainText;
+                } else if (place?.displayName) {
+                    computedStreet = typeof place.displayName === "string" ? place.displayName : place.displayName?.text || "";
+                } else if (formattedAddress) {
+                    const parts = formattedAddress.split(",").map((p: string) => p.trim()).filter(Boolean);
+                    computedStreet = parts[0] || formattedAddress;
+                } else {
+                    computedStreet = form.street;
+                }
+            }
+
+            console.log("Autofilled address parsed:", {
+                street: computedStreet,
+                city: locality,
+                state: stateName,
+                zipCode: zip,
+                country: countryName,
+            });
+
+            setForm((prev) => ({
+                ...prev,
+                street: computedStreet || prev.street,
+                city: locality || prev.city,
+                state: stateName || prev.state,
+                zipCode: zip || prev.zipCode,
+                country: countryName || prev.country,
+            }));
+
+            if (place?.location) {
+                const latVal = typeof place.location.lat === "function" ? place.location.lat() : place.location.lat;
+                const lngVal = typeof place.location.lng === "function" ? place.location.lng() : place.location.lng;
+                if (latVal != null && lngVal != null) {
+                    setCoordinates({
+                        lat: latVal.toString(),
+                        lng: lngVal.toString(),
+                    });
+                }
+            }
+        } catch (parseError) {
+            console.log("Error parsing place:", parseError);
+        } finally {
+            sessionTokenRef.current = null;
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -92,6 +340,9 @@ export default function SettingsPage() {
             }
             if (foodTypeDropdownRef.current && !foodTypeDropdownRef.current.contains(event.target as Node)) {
                 setIsOpenFoodType(false);
+            }
+            if (locationContainerRef.current && !locationContainerRef.current.contains(event.target as Node)) {
+                setIsPlaceDropdownOpen(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -113,6 +364,13 @@ export default function SettingsPage() {
             });
             setSelectedCuisines(restaurant.cuisineType || []);
             setSelectedFoodTypes(restaurant.foodType || []);
+
+            if (restaurant.restaurantAddress?.lat || restaurant.restaurantAddress?.lng) {
+                setCoordinates({
+                    lat: restaurant.restaurantAddress.lat?.toString() || "",
+                    lng: restaurant.restaurantAddress.lng?.toString() || "",
+                });
+            }
 
             if (restaurant.restaurantImage) {
                 setImagePreview(getImageUrl(restaurant.restaurantImage));
@@ -168,7 +426,7 @@ export default function SettingsPage() {
             setGlobalStaffLogin(checked);
             toast.success(`Global staff login ${checked ? "enabled" : "disabled"} successfully.`);
         } catch (error) {
-            console.error("Failed to toggle staff:", error);
+            console.log("Failed to toggle staff:", error);
             toast.error("Failed to update global staff login.");
         }
     };
@@ -190,6 +448,12 @@ export default function SettingsPage() {
                 state: form.state,
                 zipCode: form.zipCode,
                 country: form.country,
+                ...(coordinates.lat || restaurant?.restaurantAddress?.lat
+                    ? { lat: coordinates.lat || restaurant.restaurantAddress.lat }
+                    : {}),
+                ...(coordinates.lng || restaurant?.restaurantAddress?.lng
+                    ? { lng: coordinates.lng || restaurant.restaurantAddress.lng }
+                    : {}),
             },
             removedImages,
         };
@@ -209,7 +473,7 @@ export default function SettingsPage() {
             await updateRestaurant(submissionData).unwrap();
             toast.success("Restaurant profile updated successfully!");
         } catch (error: any) {
-            console.error("Update failed:", error);
+            console.log("Update failed:", error);
             const errorMessage = error?.data?.message || "Failed to update restaurant profile.";
             toast.error(errorMessage);
         }
@@ -225,6 +489,10 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-8 max-w-5xl pb-12">
+            <Script
+                src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY || "AIzaSyClDRjOfIaJRGa1MJMRL0lqTSF5rtMTTJk"}&libraries=places&v=weekly`}
+                strategy="afterInteractive"
+            />
             <div>
                 <h1 className="text-2xl font-bold text-zinc-900">Settings</h1>
                 <p className="text-zinc-500 text-sm mt-1">Manage your restaurant profile and global configurations.</p>
@@ -417,9 +685,62 @@ export default function SettingsPage() {
 
                             <div className="space-y-5">
                                 <h3 className="text-base font-bold text-zinc-900 border-b border-zinc-100 pb-2">Location</h3>
-                                <div>
+                                <div className="relative" ref={locationContainerRef}>
                                     <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Street Address</label>
-                                    <input required value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} className="w-full border border-zinc-200 rounded-[10px] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#013622]/20 focus:border-[#013622]" />
+                                    <input
+                                        required
+                                        value={form.street}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                if (isPlaceDropdownOpen && placeSuggestions.length > 0) {
+                                                    handleSelectPlace(placeSuggestions[0]);
+                                                }
+                                            } else if (e.key === "Escape") {
+                                                setIsPlaceDropdownOpen(false);
+                                            }
+                                        }}
+                                        onChange={(e) => handleStreetChange(e.target.value)}
+                                        onFocus={() => {
+                                            if (placeSuggestions.length > 0) {
+                                                setIsPlaceDropdownOpen(true);
+                                            }
+                                        }}
+                                        className="w-full border border-zinc-200 rounded-[10px] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#013622]/20 focus:border-[#013622]"
+                                    />
+
+                                    {/* Dropdown Suggestions */}
+                                    {isPlaceDropdownOpen && placeSuggestions.length > 0 && (
+                                        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-[10px] shadow-xl overflow-hidden divide-y divide-zinc-100 max-h-60 overflow-y-auto">
+                                            {placeSuggestions.map((item, idx) => {
+                                                const pred = item.placePrediction;
+                                                const mainText = pred?.mainText?.text || pred?.text?.text || "Location";
+                                                const secondaryText = pred?.secondaryText?.text || "";
+                                                return (
+                                                    <button
+                                                        key={idx}
+                                                        type="button"
+                                                        onClick={() => handleSelectPlace(item)}
+                                                        className="w-full text-left px-4 py-2.5 hover:bg-[#013622]/5 transition-colors flex items-start gap-3 cursor-pointer group"
+                                                    >
+                                                        <div className="p-1 bg-zinc-100 group-hover:bg-[#013622]/10 rounded text-zinc-500 group-hover:text-[#013622] transition-colors mt-0.5 shrink-0">
+                                                            <MapPin className="w-3.5 h-3.5" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-semibold text-zinc-900 truncate group-hover:text-[#013622] transition-colors">
+                                                                {mainText}
+                                                            </p>
+                                                            {secondaryText && (
+                                                                <p className="text-xs text-zinc-500 truncate mt-0.5">
+                                                                    {secondaryText}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="grid grid-cols-2 gap-5">
                                     <div>

@@ -8,7 +8,7 @@ import { useRegisterRestaurantMutation } from "@/redux/features/auth/authApi";
 import { useAppDispatch } from "@/redux/hooks";
 import { setUser } from "@/redux/features/auth/authSlice";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, MapPin } from "lucide-react";
 
 type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 type Slot = "Lunch" | "Dinner";
@@ -103,6 +103,10 @@ export default function Partner() {
             if (foodTypeDropdownRef.current && !foodTypeDropdownRef.current.contains(event.target as Node)) {
                 setIsOpenFoodType(false);
             }
+            if (restaurantNameContainerRef.current && !restaurantNameContainerRef.current.contains(event.target as Node) && streetContainerRef.current && !streetContainerRef.current.contains(event.target as Node)) {
+                setIsPlaceDropdownOpen(false);
+                setActiveAutocompleteField(null);
+            }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -118,8 +122,14 @@ export default function Partner() {
         return state as DaySlotsState;
     });
 
-    const autocompleteInputRef = useRef<HTMLInputElement>(null);
-    const autocompleteInstance = useRef<any>(null);
+    const [placeSuggestions, setPlaceSuggestions] = useState<any[]>([]);
+    const [isPlaceDropdownOpen, setIsPlaceDropdownOpen] = useState(false);
+    const [activeAutocompleteField, setActiveAutocompleteField] = useState<"name" | "street" | null>(null);
+    const sessionTokenRef = useRef<any>(null);
+    const searchTimeoutRef = useRef<any>(null);
+    const restaurantNameContainerRef = useRef<HTMLDivElement>(null);
+    const streetContainerRef = useRef<HTMLDivElement>(null);
+
     const [restaurantName, setRestaurantName] = useState("");
     const [street, setStreet] = useState("");
     const [city, setCity] = useState("");
@@ -157,62 +167,256 @@ export default function Partner() {
 
     const [registerRestaurant, { isLoading }] = useRegisterRestaurantMutation();
 
-    const initAutocomplete = () => {
-        if ((window as any).google && autocompleteInputRef.current && !autocompleteInstance.current) {
-            const autocomplete = new (window as any).google.maps.places.Autocomplete(autocompleteInputRef.current, {
-                types: ["establishment"],
-            });
+    const fetchPlaceSuggestions = (input: string, field: "name" | "street") => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
 
-            autocompleteInstance.current = autocomplete;
+        if (!input || input.trim().length < 2) {
+            setPlaceSuggestions([]);
+            setIsPlaceDropdownOpen(false);
+            return;
+        }
 
-            autocomplete.addListener("place_changed", () => {
-                const place = autocomplete.getPlace();
+        searchTimeoutRef.current = setTimeout(async () => {
+            try {
+                if (typeof window !== "undefined" && (window as any).google?.maps?.importLibrary) {
+                    const { AutocompleteSessionToken, AutocompleteSuggestion } = await (window as any).google.maps.importLibrary("places");
 
-                if (place.name) {
-                    setRestaurantName(place.name);
+                    if (!sessionTokenRef.current) {
+                        sessionTokenRef.current = new AutocompleteSessionToken();
+                    }
+
+                    const request: any = {
+                        input,
+                        sessionToken: sessionTokenRef.current,
+                    };
+
+                    const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+                    if (suggestions && suggestions.length > 0) {
+                        setPlaceSuggestions(suggestions);
+                        setActiveAutocompleteField(field);
+                        setIsPlaceDropdownOpen(true);
+                    } else {
+                        setPlaceSuggestions([]);
+                        setIsPlaceDropdownOpen(false);
+                    }
                 }
+            } catch (error) {
+                console.log("Places autocomplete search error:", error);
+                setPlaceSuggestions([]);
+                setIsPlaceDropdownOpen(false);
+            }
+        }, 300);
+    };
 
-                let streetNumber = "";
-                let route = "";
-                let locality = "";
-                let stateName = "";
-                let zip = "";
-                let countryName = "";
+    const handleSelectPlace = async (suggestion: any, source: "name" | "street") => {
+        setIsPlaceDropdownOpen(false);
+        setActiveAutocompleteField(null);
+        const placePrediction = suggestion?.placePrediction;
+        if (!placePrediction) return;
 
-                place.address_components?.forEach((component: { types: any; long_name: string; short_name: string }) => {
-                    const types = component.types;
-                    if (types.includes("street_number")) streetNumber = component.long_name;
-                    if (types.includes("route")) route = component.long_name;
-                    if (types.includes("locality")) locality = component.long_name;
-                    if (types.includes("postal_town") && !locality) locality = component.long_name;
-                    if (types.includes("administrative_area_level_1")) stateName = component.short_name;
-                    if (types.includes("postal_code")) zip = component.long_name;
-                    if (types.includes("country")) countryName = component.long_name;
+        let place: any = null;
+        try {
+            if (typeof placePrediction.toPlace === "function") {
+                place = placePrediction.toPlace();
+                await place.fetchFields({
+                    fields: ["displayName", "formattedAddress", "location", "addressComponents"],
                 });
+            }
+        } catch (error) {
+            console.log("Failed to fetch place details:", error);
+        }
 
-                setStreet(`${streetNumber} ${route}`.trim() || place.name || "");
-                if (locality) setCity(locality);
-                if (stateName) setState(stateName);
-                if (zip) setZipCode(zip);
-                if (countryName) setCountry(countryName);
+        try {
+            let streetNumber = "";
+            let route = "";
+            let locality = "";
+            let sublocality = "";
+            let stateName = "";
+            let zip = "";
+            let countryName = "";
 
-                if (place.geometry && place.geometry.location) {
-                    setLat(place.geometry.location.lat().toString());
-                    setLng(place.geometry.location.lng().toString());
+            const components = place?.addressComponents || place?.address_components;
+            if (Array.isArray(components)) {
+                components.forEach((component: any) => {
+                    const types = component.types || [];
+                    const longName = component.longText || component.long_name || component.text || component.name || "";
+                    const shortName = component.shortText || component.short_name || "";
+
+                    if (types.includes("street_number")) streetNumber = longName;
+                    if (types.includes("route")) route = longName;
+                    if (types.includes("locality")) locality = longName;
+                    if (types.includes("postal_town") && !locality) locality = longName;
+                    if (types.includes("sublocality") || types.includes("sublocality_level_1") || types.includes("sublocality_level_2")) {
+                        sublocality = longName;
+                        if (!locality) locality = longName;
+                    }
+                    if (types.includes("administrative_area_level_1")) stateName = shortName || longName;
+                    if (types.includes("postal_code") || types.includes("postal_code_prefix")) zip = longName;
+                    if (types.includes("country")) countryName = longName || shortName;
+                });
+            }
+
+            const formattedAddress = place?.formattedAddress || "";
+            const secondaryText = placePrediction?.secondaryText?.text || "";
+            const fullText = placePrediction?.text?.text || "";
+            const mainText = placePrediction?.mainText?.text || "";
+
+            // Fallback for Country if not found in addressComponents
+            if (!countryName) {
+                const countrySources = [secondaryText, formattedAddress, fullText];
+                for (const src of countrySources) {
+                    if (!src) continue;
+                    const parts = src
+                        .split(",")
+                        .map((p: string) => p.trim())
+                        .filter(Boolean);
+                    if (parts.length > 0) {
+                        const lastPart = parts[parts.length - 1];
+                        if (lastPart && !/\d/.test(lastPart)) {
+                            countryName = lastPart;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Fallback for ZIP Code if not found in addressComponents (e.g. Bangladesh 1212)
+            if (!zip) {
+                // Priority 1: Check secondaryText
+                if (secondaryText) {
+                    const match = secondaryText.match(/\b\d{5}(?:-\d{4})?\b/) || secondaryText.match(/\b[A-Z]\d[A-Z]\s*\d[A-Z]\d\b/i) || secondaryText.match(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i) || secondaryText.match(/\b(\d{4,6})\b/);
+                    if (match) {
+                        zip = match[0].trim();
+                    }
                 }
 
-                if (place.editorial_summary && place.editorial_summary.overview) {
-                    setRestaurantDescription(place.editorial_summary.overview);
-                } else if (place.name && locality) {
-                    setRestaurantDescription(`Welcome to ${place.name}, a premier dining destination located in the heart of ${locality}.`);
+                // Priority 2: Check formattedAddress from back to front
+                if (!zip && formattedAddress) {
+                    const parts = formattedAddress
+                        .split(",")
+                        .map((p: string) => p.trim())
+                        .filter(Boolean);
+                    for (let i = parts.length - 1; i >= 0; i--) {
+                        const match = parts[i].match(/\b\d{5}(?:-\d{4})?\b/) || parts[i].match(/\b[A-Z]\d[A-Z]\s*\d[A-Z]\d\b/i) || parts[i].match(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i) || parts[i].match(/\b(\d{4,6})\b/);
+                        if (match) {
+                            zip = match[0].trim();
+                            break;
+                        }
+                    }
                 }
+
+                // Priority 3: Check fullText from back to front
+                if (!zip && fullText) {
+                    const parts = fullText
+                        .split(",")
+                        .map((p: string) => p.trim())
+                        .filter(Boolean);
+                    for (let i = parts.length - 1; i >= 0; i--) {
+                        const match = parts[i].match(/\b\d{5}(?:-\d{4})?\b/) || parts[i].match(/\b[A-Z]\d[A-Z]\s*\d[A-Z]\d\b/i) || parts[i].match(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i) || parts[i].match(/\b(\d{4,6})\b/);
+                        if (match) {
+                            zip = match[0].trim();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Fallback for City if not found
+            if (!locality) {
+                if (sublocality) {
+                    locality = sublocality;
+                } else if (secondaryText) {
+                    const parts = secondaryText
+                        .split(",")
+                        .map((p: string) => p.trim())
+                        .filter(Boolean);
+                    if (parts.length > 0) {
+                        let cityCandidate = parts[0];
+                        if (zip) {
+                            cityCandidate = cityCandidate.replace(zip, "").trim();
+                        }
+                        cityCandidate = cityCandidate.replace(/\b\d{4,6}\b/g, "").trim();
+                        if (cityCandidate) {
+                            locality = cityCandidate;
+                        }
+                    }
+                }
+            }
+
+            // Fallback for State if not found
+            if (!stateName) {
+                if (locality) {
+                    stateName = locality;
+                }
+            }
+
+            // Compute street address
+            let computedStreet = `${streetNumber} ${route}`.trim();
+            if (!computedStreet) {
+                if (source === "street") {
+                    computedStreet = mainText;
+                } else if (formattedAddress) {
+                    const parts = formattedAddress
+                        .split(",")
+                        .map((p: string) => p.trim())
+                        .filter(Boolean);
+                    computedStreet = parts[0] || formattedAddress;
+                }
+            }
+
+            // Update restaurant name
+            const chosenName = (typeof place?.displayName === "string" ? place.displayName : place?.displayName?.text) || mainText;
+            if (chosenName && (source === "name" || !restaurantName)) {
+                setRestaurantName(chosenName);
+            }
+
+            if (computedStreet) setStreet(computedStreet);
+            if (locality) setCity(locality);
+            if (stateName) setState(stateName);
+            if (zip) setZipCode(zip);
+            if (countryName) setCountry(countryName);
+
+            if (place?.location) {
+                const latVal = typeof place.location.lat === "function" ? place.location.lat() : place.location.lat;
+                const lngVal = typeof place.location.lng === "function" ? place.location.lng() : place.location.lng;
+                if (latVal != null && lngVal != null) {
+                    setLat(latVal.toString());
+                    setLng(lngVal.toString());
+                }
+            }
+
+            if (!restaurantDescription && chosenName && locality) {
+                setRestaurantDescription(`Welcome to ${chosenName}, a premier dining destination located in the heart of ${locality}.`);
+            }
+
+            console.log("Partner place selected and parsed:", {
+                chosenName,
+                street: computedStreet,
+                city: locality,
+                state: stateName,
+                zipCode: zip,
+                country: countryName,
             });
+        } catch (parseError) {
+            console.log("Error parsing place:", parseError);
+        } finally {
+            sessionTokenRef.current = null;
         }
     };
 
-    React.useEffect(() => {
-        initAutocomplete();
-    });
+    const handleRestaurantNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setRestaurantName(val);
+        fetchPlaceSuggestions(val, "name");
+    };
+
+    const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setStreet(val);
+        fetchPlaceSuggestions(val, "street");
+    };
 
     const toggleSlot = (day: Day, slot: Slot) => {
         setDaySlots((prev) => ({
@@ -349,14 +553,14 @@ export default function Partner() {
             }
             router.push("/dashboard");
         } catch (error) {
-            console.error("Registration failed:", error);
+            console.log("Registration failed:", error);
             toast.error("Registration failed. Please try again.");
         }
     };
 
     return (
         <div className="container mx-auto px-4 py-20">
-            <Script src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY || "AIzaSyDJXC1_hT7bYHo1qQU56OOAQTjz4FPq0Ks"}&libraries=places`} strategy="afterInteractive" onLoad={initAutocomplete} />
+            <Script src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY || "AIzaSyClDRjOfIaJRGa1MJMRL0lqTSF5rtMTTJk"}&libraries=places&v=weekly`} strategy="afterInteractive" />
             <div className="relative max-w-6xl mx-auto rounded-[12px] overflow-hidden group mb-12 shadow-2xl">
                 <Image src="/partner.png" alt="Partner" width={1300} height={500} className="w-full h-auto object-cover" priority />
                 <div
@@ -396,8 +600,28 @@ export default function Partner() {
                         <section className="space-y-6">
                             <h2 className="text-lg font-bold text-[#005C2C] tracking-wide border-b pb-2 uppercase">Restaurant/Business Details</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
-                                    <FormInput label="Restaurant Name" name="restaurantName" placeholder="Start typing to search for your restaurant..." required value={restaurantName} onChange={(e) => setRestaurantName(e.target.value)} inputRef={autocompleteInputRef} />
+                                <div className="md:col-span-2 relative" ref={restaurantNameContainerRef}>
+                                    <FormInput label="Restaurant Name" name="restaurantName" placeholder="Start typing to search for your restaurant..." required value={restaurantName} onChange={handleRestaurantNameChange} />
+                                    {isPlaceDropdownOpen && activeAutocompleteField === "name" && placeSuggestions.length > 0 && (
+                                        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl overflow-hidden divide-y divide-zinc-100 max-h-60 overflow-y-auto">
+                                            {placeSuggestions.map((item, idx) => {
+                                                const pred = item.placePrediction;
+                                                const mainText = pred?.mainText?.text || pred?.text?.text || "Location";
+                                                const secondaryText = pred?.secondaryText?.text || "";
+                                                return (
+                                                    <button key={idx} type="button" onClick={() => handleSelectPlace(item, "name")} className="w-full text-left px-4 py-2.5 hover:bg-[#CF0738]/5 transition-colors flex items-start gap-3 cursor-pointer group">
+                                                        <div className="p-1 bg-zinc-100 group-hover:bg-[#CF0738]/10 rounded text-zinc-500 group-hover:text-[#CF0738] transition-colors mt-0.5 shrink-0">
+                                                            <MapPin className="w-3.5 h-3.5" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-semibold text-zinc-900 truncate group-hover:text-[#CF0738] transition-colors">{mainText}</p>
+                                                            {secondaryText && <p className="text-xs text-zinc-500 truncate mt-0.5">{secondaryText}</p>}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <label className="text-[13px] font-bold text-zinc-700 uppercase tracking-tight">Short Description</label>
@@ -410,8 +634,28 @@ export default function Partner() {
                                         placeholder="Tell us about your restaurant's story and specialty..."
                                     />
                                 </div>
-                                <div className="md:col-span-2">
-                                    <FormInput label="Restaurant Address" name="street" placeholder="Street Address" required value={street} onChange={(e) => setStreet(e.target.value)} />
+                                <div className="md:col-span-2 relative" ref={streetContainerRef}>
+                                    <FormInput label="Restaurant Address" name="street" placeholder="Street Address" required value={street} onChange={handleStreetChange} />
+                                    {isPlaceDropdownOpen && activeAutocompleteField === "street" && placeSuggestions.length > 0 && (
+                                        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-xl shadow-xl overflow-hidden divide-y divide-zinc-100 max-h-60 overflow-y-auto">
+                                            {placeSuggestions.map((item, idx) => {
+                                                const pred = item.placePrediction;
+                                                const mainText = pred?.mainText?.text || pred?.text?.text || "Location";
+                                                const secondaryText = pred?.secondaryText?.text || "";
+                                                return (
+                                                    <button key={idx} type="button" onClick={() => handleSelectPlace(item, "street")} className="w-full text-left px-4 py-2.5 hover:bg-[#CF0738]/5 transition-colors flex items-start gap-3 cursor-pointer group">
+                                                        <div className="p-1 bg-zinc-100 group-hover:bg-[#CF0738]/10 rounded text-zinc-500 group-hover:text-[#CF0738] transition-colors mt-0.5 shrink-0">
+                                                            <MapPin className="w-3.5 h-3.5" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-semibold text-zinc-900 truncate group-hover:text-[#CF0738] transition-colors">{mainText}</p>
+                                                            {secondaryText && <p className="text-xs text-zinc-500 truncate mt-0.5">{secondaryText}</p>}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                                 <FormInput label="City" name="city" placeholder="City" required value={city} onChange={(e) => setCity(e.target.value)} />
                                 <FormInput label="State/Province" name="state" placeholder="State" required value={state} onChange={(e) => setState(e.target.value)} />
