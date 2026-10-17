@@ -490,7 +490,7 @@ export default function SettingsPage() {
     return (
         <div className="space-y-8 max-w-5xl pb-12">
             <Script
-                src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY || "AIzaSyClDRjOfIaJRGa1MJMRL0lqTSF5rtMTTJk"}&libraries=places&v=weekly`}
+                src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY || ""}&libraries=places&v=weekly`}
                 strategy="afterInteractive"
             />
             <div>

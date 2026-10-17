@@ -560,7 +560,7 @@ export default function Partner() {
 
     return (
         <div className="container mx-auto px-4 py-20">
-            <Script src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY || "AIzaSyClDRjOfIaJRGa1MJMRL0lqTSF5rtMTTJk"}&libraries=places&v=weekly`} strategy="afterInteractive" />
+            <Script src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY || ""}&libraries=places&v=weekly`} strategy="afterInteractive" />
             <div className="relative max-w-6xl mx-auto rounded-[12px] overflow-hidden group mb-12 shadow-2xl">
                 <Image src="/partner.png" alt="Partner" width={1300} height={500} className="w-full h-auto object-cover" priority />
                 <div
