@@ -3,22 +3,37 @@
 import React, { useState } from "react";
 import { Plus, Edit2, Trash2, Loader2, X, Ticket, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useGetCouponsQuery, useCreateCouponMutation, useUpdateCouponMutation, useDeleteCouponMutation } from "@/redux/features/coupon/couponApi";
+import {
+    useGetCouponsQuery,
+    useCreateCouponMutation,
+    useUpdateCouponMutation,
+    useDeleteCouponMutation,
+    ICoupon,
+    ISelectedPlan,
+} from "@/redux/features/coupon/couponApi";
+import { useGetSubscriptionPlansQuery } from "@/redux/features/admin/subscriptionApi";
+
+interface IApiError {
+    data?: {
+        message?: string;
+    };
+    message?: string;
+}
 
 export default function AdminCouponsPage() {
-    const { data: couponsRes, isLoading: isCouponsLoading } = useGetCouponsQuery({});
+    const { data: couponsRes, isLoading: isCouponsLoading } = useGetCouponsQuery();
     const coupons = couponsRes?.data || [];
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingCoupon, setEditingCoupon] = useState<any>(null);
-    const [deletingCoupon, setDeletingCoupon] = useState<any>(null);
+    const [editingCoupon, setEditingCoupon] = useState<ICoupon | null>(null);
+    const [deletingCoupon, setDeletingCoupon] = useState<ICoupon | null>(null);
 
     const openCreateModal = () => {
         setEditingCoupon(null);
         setIsModalOpen(true);
     };
 
-    const openEditModal = (coupon: any) => {
+    const openEditModal = (coupon: ICoupon) => {
         setEditingCoupon(coupon);
         setIsModalOpen(true);
     };
@@ -61,7 +76,7 @@ export default function AdminCouponsPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                coupons.map((c: any) => (
+                                coupons.map((c: ICoupon) => (
                                     <tr key={c._id} className="hover:bg-white/2 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-bold text-white flex items-center gap-2">
@@ -70,7 +85,7 @@ export default function AdminCouponsPage() {
                                             </div>
                                             <div className="text-xs text-zinc-500 mt-0.5">{c.name || "No Name"}</div>
                                         </td>
-                                        <td className="px-6 py-4 font-medium">{c.percentOff ? `${c.percentOff}% off` : `${(c.amountOff / 100).toFixed(2)} ${c.currency?.toUpperCase() || "CHF"} off`}</td>
+                                        <td className="px-6 py-4 font-medium">{c.percentOff ? `${c.percentOff}% off` : `${((c.amountOff || 0) / 100).toFixed(2)} ${c.currency?.toUpperCase() || "CHF"} off`}</td>
                                         <td className="px-6 py-4">
                                             <span className="capitalize">{c.duration}</span>
                                             {c.duration === "repeating" && <span className="text-zinc-500 text-xs ml-1">({c.durationInMonths} mos)</span>}
@@ -85,11 +100,22 @@ export default function AdminCouponsPage() {
                                                 ) : (
                                                     <span className="w-fit bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Inactive</span>
                                                 )}
-                                                {c.isDefault && <span className="w-fit bg-[#1447E6]/10 text-[#1447E6] border border-[#1447E6]/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Default Referral</span>}
+                                                {c.isDefault && (
+                                                    <span className="w-fit bg-[#1447E6]/10 text-[#1447E6] border border-[#1447E6]/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Default Referral</span>
+                                                )}
                                                 {c.isDirectUse ? (
                                                     <span className="w-fit bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Direct Use: Yes</span>
                                                 ) : (
                                                     <span className="w-fit bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">Direct Use: No</span>
+                                                )}
+                                                {c.selectedPlans && c.selectedPlans.length > 0 ? (
+                                                    <span className="w-fit bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+                                                        Plans: {c.selectedPlans.map((p: string | ISelectedPlan) => (typeof p === "object" ? p?.name : p)).join(", ")}
+                                                    </span>
+                                                ) : (
+                                                    <span className="w-fit bg-white/5 text-zinc-400 border border-white/10 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+                                                        All Plans
+                                                    </span>
                                                 )}
                                             </div>
                                         </td>
@@ -112,14 +138,14 @@ export default function AdminCouponsPage() {
                 )}
             </div>
 
-            {isModalOpen && <CouponModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} editingCoupon={editingCoupon} />}
+            {isModalOpen && <CouponModal onClose={() => setIsModalOpen(false)} editingCoupon={editingCoupon} />}
 
             {deletingCoupon && <DeleteCouponModal coupon={deletingCoupon} onClose={() => setDeletingCoupon(null)} />}
         </div>
     );
 }
 
-function ToggleDirectUseButton({ coupon }: { coupon: any }) {
+function ToggleDirectUseButton({ coupon }: { coupon: ICoupon }) {
     const [updateCoupon, { isLoading }] = useUpdateCouponMutation();
 
     const handleToggle = async () => {
@@ -129,9 +155,10 @@ function ToggleDirectUseButton({ coupon }: { coupon: any }) {
                 data: { isDirectUse: !coupon.isDirectUse },
             }).unwrap();
             toast.success(`Coupon marked as ${!coupon.isDirectUse ? "Direct Use" : "Standard"}`);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to update direct use status:", error);
-            toast.error(error?.data?.message || "Failed to update direct use status");
+            const err = error as IApiError;
+            toast.error(err?.data?.message || err?.message || "Failed to update direct use status");
         }
     };
 
@@ -156,7 +183,7 @@ function ToggleDirectUseButton({ coupon }: { coupon: any }) {
     );
 }
 
-function DeleteCouponModal({ coupon, onClose }: { coupon: any; onClose: () => void }) {
+function DeleteCouponModal({ coupon, onClose }: { coupon: ICoupon; onClose: () => void }) {
     const [deleteCoupon, { isLoading }] = useDeleteCouponMutation();
 
     const handleConfirm = async () => {
@@ -164,9 +191,10 @@ function DeleteCouponModal({ coupon, onClose }: { coupon: any; onClose: () => vo
             await deleteCoupon(coupon._id).unwrap();
             toast.success("Coupon deleted successfully!");
             onClose();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Coupon deletion failed:", error);
-            toast.error(error?.data?.message || "Failed to delete coupon.");
+            const err = error as IApiError;
+            toast.error(err?.data?.message || err?.message || "Failed to delete coupon.");
         }
     };
 
@@ -179,7 +207,7 @@ function DeleteCouponModal({ coupon, onClose }: { coupon: any; onClose: () => vo
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-3">Delete Coupon?</h2>
                     <p className="text-zinc-400 mb-8 leading-relaxed">
-                        Are you sure you want to delete <strong className="text-white font-semibold">"{coupon.couponId}"</strong>? This will permanently remove it from your database and Stripe.
+                        Are you sure you want to delete <strong className="text-white font-semibold">&quot;{coupon.couponId}&quot;</strong>? This will permanently remove it from your database and Stripe.
                     </p>
 
                     <div className="flex items-center gap-4">
@@ -196,11 +224,13 @@ function DeleteCouponModal({ coupon, onClose }: { coupon: any; onClose: () => vo
     );
 }
 
-function CouponModal({ isOpen, onClose, editingCoupon }: { isOpen: boolean; onClose: () => void; editingCoupon: any }) {
+function CouponModal({ onClose, editingCoupon }: { onClose: () => void; editingCoupon: ICoupon | null }) {
     const isEditing = !!editingCoupon;
 
     const [createCoupon, { isLoading: isCreating }] = useCreateCouponMutation();
     const [updateCoupon, { isLoading: isUpdating }] = useUpdateCouponMutation();
+    const { data: plansRes } = useGetSubscriptionPlansQuery();
+    const plans: ISelectedPlan[] = plansRes?.data || [];
 
     const [formData, setFormData] = useState({
         couponId: editingCoupon?.couponId || "",
@@ -211,8 +241,11 @@ function CouponModal({ isOpen, onClose, editingCoupon }: { isOpen: boolean; onCl
         duration: editingCoupon?.duration || "once",
         durationInMonths: editingCoupon?.durationInMonths || "",
         maxRedemptions: editingCoupon?.maxRedemptions || "",
-        isDefault: editingCoupon?.isDefault || false,
-        isDirectUse: editingCoupon?.isDirectUse || false,
+        isDefault: Boolean(editingCoupon?.isDefault),
+        selectedPlans: Array.isArray(editingCoupon?.selectedPlans)
+            ? editingCoupon.selectedPlans.map((p: string | ISelectedPlan) => (typeof p === "string" ? p : p?._id)).filter((id): id is string => Boolean(id))
+            : [] as string[],
+        isDirectUse: Boolean(editingCoupon?.isDirectUse),
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -223,27 +256,38 @@ function CouponModal({ isOpen, onClose, editingCoupon }: { isOpen: boolean; onCl
         }));
     };
 
+    const handlePlanCheckboxChange = (planId: string) => {
+        setFormData((prev) => {
+            const current = prev.selectedPlans || [];
+            const exists = current.includes(planId);
+            const updated = exists ? current.filter((id) => id !== planId) : [...current, planId];
+            return { ...prev, selectedPlans: updated };
+        });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
-            if (isEditing) {
-                // Edit mode: Stripe only allows updating name & metadata, plus local boolean options.
-                const updatePayload = {
+            if (isEditing && editingCoupon) {
+                // Edit mode
+                const updatePayload: Partial<ICoupon> = {
                     name: formData.name,
-                    isDefault: formData.isDefault,
-                    isDirectUse: formData.isDirectUse,
+                    isDefault: Boolean(formData.isDefault),
+                    selectedPlans: formData.selectedPlans,
+                    isDirectUse: Boolean(formData.isDirectUse),
                 };
                 await updateCoupon({ id: editingCoupon._id, data: updatePayload }).unwrap();
                 toast.success("Coupon updated successfully");
             } else {
                 // Create mode
-                const payload: any = {
-                    couponId: formData.couponId,
+                const payload: Partial<ICoupon> & { discountType?: string; discountValue?: number | string } = {
+                    couponId: formData.couponId.trim().toUpperCase(),
                     name: formData.name,
-                    duration: formData.duration,
-                    isDefault: formData.isDefault,
-                    isDirectUse: formData.isDirectUse,
+                    duration: formData.duration as "once" | "repeating" | "forever",
+                    isDefault: Boolean(formData.isDefault),
+                    selectedPlans: formData.selectedPlans,
+                    isDirectUse: Boolean(formData.isDirectUse),
                 };
 
                 if (formData.discountType === "percent") {
@@ -265,8 +309,9 @@ function CouponModal({ isOpen, onClose, editingCoupon }: { isOpen: boolean; onCl
                 toast.success("Coupon created successfully");
             }
             onClose();
-        } catch (error: any) {
-            toast.error(error?.data?.message || `Failed to ${isEditing ? "update" : "create"} coupon`);
+        } catch (error: unknown) {
+            const err = error as IApiError;
+            toast.error(err?.data?.message || err?.message || `Failed to ${isEditing ? "update" : "create"} coupon`);
         }
     };
 
@@ -279,7 +324,7 @@ function CouponModal({ isOpen, onClose, editingCoupon }: { isOpen: boolean; onCl
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[85vh] overflow-y-auto">
                     <div className="space-y-4">
                         <div>
                             <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Coupon ID / Code</label>
@@ -366,21 +411,75 @@ function CouponModal({ isOpen, onClose, editingCoupon }: { isOpen: boolean; onCl
                         )}
 
                         <div className="border-t border-white/5 pt-4 mt-2 space-y-4">
+                            {/* isDefault checkbox */}
                             <label className="flex items-center gap-3 cursor-pointer group">
-                                <input type="checkbox" name="isDefault" checked={formData.isDefault} onChange={handleChange} className="w-5 h-5 rounded bg-[#0A0A0A] border border-white/20 text-[#1447E6] focus:ring-[#1447E6] focus:ring-offset-[#171717]" />
+                                <input
+                                    type="checkbox"
+                                    name="isDefault"
+                                    checked={formData.isDefault}
+                                    onChange={handleChange}
+                                    className="w-5 h-5 rounded bg-[#0A0A0A] border border-white/20 text-[#1447E6] focus:ring-[#1447E6] focus:ring-offset-[#171717]"
+                                />
                                 <div>
                                     <div className="text-sm font-bold text-white group-hover:text-[#1447E6] transition-colors">Default Referral Coupon</div>
-                                    <div className="text-xs text-zinc-500">Automatically apply this to users signing up via referrals.</div>
+                                    <div className="text-xs text-zinc-500">Automatically apply this to users signing up via influencer referrals.</div>
                                 </div>
                             </label>
 
+                            {/* isDirectUse checkbox */}
                             <label className="flex items-center gap-3 cursor-pointer group">
-                                <input type="checkbox" name="isDirectUse" checked={formData.isDirectUse} onChange={handleChange} className="w-5 h-5 rounded bg-[#0A0A0A] border border-white/20 text-purple-500 focus:ring-purple-500 focus:ring-offset-[#171717]" />
+                                <input
+                                    type="checkbox"
+                                    name="isDirectUse"
+                                    checked={formData.isDirectUse}
+                                    onChange={handleChange}
+                                    className="w-5 h-5 rounded bg-[#0A0A0A] border border-white/20 text-purple-500 focus:ring-purple-500 focus:ring-offset-[#171717]"
+                                />
                                 <div>
                                     <div className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">Direct Use Coupon</div>
-                                    <div className="text-xs text-zinc-500">Allow this coupon to be used directly without referral restrictions.</div>
+                                    <div className="text-xs text-zinc-500">Allow this coupon to be used directly at checkout without referral restrictions.</div>
                                 </div>
                             </label>
+
+                            {/* Multi-select Subscription Plans restriction */}
+                            <div className="p-3 bg-[#0A0A0A] border border-white/10 rounded-lg space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                                        Plan Restriction
+                                    </label>
+                                    {formData.selectedPlans.length > 0 ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData((prev) => ({ ...prev, selectedPlans: [] }))}
+                                            className="text-[11px] text-zinc-400 hover:text-white underline cursor-pointer"
+                                        >
+                                            Clear (Apply to All Plans)
+                                        </button>
+                                    ) : (
+                                        <span className="text-[10px] text-emerald-400 font-semibold">Valid on All Plans</span>
+                                    )}
+                                </div>
+                                <p className="text-[11px] text-zinc-500">
+                                    Leave unselected to allow on all plans, or check specific plans to restrict:
+                                </p>
+                                {plans.length === 0 ? (
+                                    <p className="text-xs text-zinc-500">No subscription plans found.</p>
+                                ) : (
+                                    <div className="space-y-1.5 max-h-36 overflow-y-auto pt-1">
+                                        {plans.map((p: ISelectedPlan) => (
+                                            <label key={p._id} className="flex items-center gap-2 cursor-pointer text-xs text-zinc-300 hover:text-white">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.selectedPlans.includes(p._id)}
+                                                    onChange={() => handlePlanCheckboxChange(p._id)}
+                                                    className="w-4 h-4 rounded bg-[#171717] border-white/20 text-[#1447E6] focus:ring-[#1447E6]"
+                                                />
+                                                <span>{p.name} {p.price ? `(CHF ${p.price})` : ""}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
